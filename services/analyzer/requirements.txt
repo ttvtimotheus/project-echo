@@ -1,0 +1,5 @@
+# services/analyzer/requirements.txt
+fastapi
+uvicorn
+google-cloud-firestore
+google-cloud-pubsub
