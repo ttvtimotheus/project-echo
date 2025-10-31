@@ -26,8 +26,7 @@ gcloud run jobs deploy $JOB_NAME \
   --set-env-vars=GCP_PROJECT=$PROJECT_ID \
   --max-retries=3 \
   --task-timeout=10m \
-  --project=$PROJECT_ID \
-  --execute-now=false
+  --project=$PROJECT_ID
 
 echo "✓ $JOB_NAME job deployed successfully!"
 echo ""
