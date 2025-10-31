@@ -31,7 +31,7 @@ gcloud run deploy $SERVICE_NAME \
   --gpu=1 \
   --gpu-type=nvidia-l4 \
   --set-env-vars=GCP_PROJECT=$PROJECT_ID \
-  --max-instances=10 \
+  --max-instances=3 \
   --timeout=300 \
   --project=$PROJECT_ID
 
