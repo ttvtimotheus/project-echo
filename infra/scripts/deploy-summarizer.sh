@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e
 
+# Change to project root
+cd "$(dirname "$0")/../.."
+
 PROJECT_ID="echo-476821"
 REGION="europe-west4"
 SERVICE_NAME="summarizer"
