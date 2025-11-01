@@ -1,10 +1,9 @@
 'use client'
 
-import { Box, Card, CardContent, Typography, Chip, Link } from '@mui/material'
-import { ExternalLink } from 'lucide-react'
+import { Box, Card, CardContent, Typography, Chip, Link, CircularProgress, Paper } from '@mui/material'
+import { OpenInNew as OpenInNewIcon } from '@mui/icons-material'
 import useSWR from 'swr'
-import { motion } from 'framer-motion'
-import type { Paper } from '@/types'
+import type { Paper as PaperType } from '@/types'
 
 const fetcher = (url: string) => fetch(url).then(r => r.json())
 
@@ -15,7 +14,7 @@ interface Props {
 }
 
 export function LiveFeed({ searchQuery, selectedTopics }: Props) {
-  const { data, isLoading } = useSWR<{papers: Paper[]}>('/api/papers?limit=20', fetcher, {
+  const { data, isLoading } = useSWR<{papers: PaperType[]}>('/api/papers?limit=20', fetcher, {
     refreshInterval: 10000,
   })
 
@@ -28,43 +27,101 @@ export function LiveFeed({ searchQuery, selectedTopics }: Props) {
   })
 
   return (
-    <Card className="glass-dark">
+    <Card 
+      sx={{ 
+        backgroundColor: 'var(--md-sys-color-surface-container)',
+        borderRadius: '12px',
+        boxShadow: 'none'
+      }}
+    >
       <CardContent>
-        <Typography variant="h6" className="mb-4 font-bold">
-          Live Research Feed
+        <Typography 
+          variant="h6" 
+          sx={{ 
+            mb: 3,
+            fontSize: 20,
+            fontWeight: 500,
+            color: 'var(--md-sys-color-on-surface)'
+          }}
+        >
+          Research Feed
         </Typography>
-        <Box className="space-y-4 max-h-[600px] overflow-y-auto">
-          {isLoading && <Typography>Loading...</Typography>}
-          {filtered.map((paper, i) => (
-            <motion.div
-              key={paper.id}
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: i * 0.05 }}
-            >
-              <Card className="glass hover:bg-white/10 transition-colors">
-                <CardContent>
-                  <Link href={paper.link} target="_blank" className="flex items-start gap-2 no-underline">
-                    <Box className="flex-1">
-                      <Typography variant="subtitle1" className="font-semibold text-primary-300">
-                        {paper.title}
-                      </Typography>
-                      <Typography variant="body2" className="text-gray-400 my-2 line-clamp-2">
-                        {paper.summary}
-                      </Typography>
-                      <Box className="flex gap-2 flex-wrap">
-                        {paper.topics.map(topic => (
-                          <Chip key={topic} label={topic} size="small" className="bg-primary-900/50" />
-                        ))}
-                      </Box>
+        
+        {isLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+            <CircularProgress size={32} />
+          </Box>
+        ) : (
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 600, overflowY: 'auto' }}>
+            {filtered.map((paper) => (
+              <Paper
+                key={paper.id}
+                sx={{
+                  p: 2,
+                  backgroundColor: 'var(--md-sys-color-surface)',
+                  borderRadius: '8px',
+                  '&:hover': {
+                    backgroundColor: 'var(--md-sys-color-surface-container-high)',
+                  },
+                  cursor: 'pointer'
+                }}
+              >
+                <Link 
+                  href={paper.link} 
+                  target="_blank" 
+                  underline="none"
+                  sx={{ 
+                    display: 'flex', 
+                    gap: 2,
+                    color: 'inherit'
+                  }}
+                >
+                  <Box sx={{ flex: 1 }}>
+                    <Typography 
+                      variant="subtitle1" 
+                      sx={{ 
+                        fontWeight: 500,
+                        color: 'var(--md-sys-color-primary)',
+                        mb: 1
+                      }}
+                    >
+                      {paper.title}
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: 'var(--md-sys-color-on-surface-variant)',
+                        mb: 2,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      {paper.summary}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      {paper.topics.map(topic => (
+                        <Chip 
+                          key={topic} 
+                          label={topic} 
+                          size="small" 
+                          sx={{
+                            backgroundColor: 'var(--md-sys-color-primary-container)',
+                            color: 'var(--md-sys-color-on-primary-container)',
+                            fontWeight: 500,
+                            fontSize: 12
+                          }}
+                        />
+                      ))}
                     </Box>
-                    <ExternalLink className="w-4 h-4 text-gray-500" />
-                  </Link>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
-        </Box>
+                  </Box>
+                  <OpenInNewIcon sx={{ fontSize: 18, color: 'var(--md-sys-color-on-surface-variant)' }} />
+                </Link>
+              </Paper>
+            ))}
+          </Box>
+        )}
       </CardContent>
     </Card>
   )

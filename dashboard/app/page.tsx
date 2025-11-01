@@ -19,56 +19,44 @@ export default function Dashboard() {
   })
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-950 via-purple-950 to-slate-950">
-      {/* Background effects */}
-      <div className="fixed inset-0 bg-[url('/grid.svg')] bg-center [mask-image:linear-gradient(180deg,white,rgba(255,255,255,0))]" />
-      <div className="fixed inset-0 flex items-center justify-center">
-        <div className="h-[40rem] w-[40rem] animate-pulse-slow rounded-full bg-primary-500/20 blur-3xl" />
-      </div>
-
-      {/* Content */}
-      <div className="relative">
-        <Header />
+    <main className="min-h-screen" style={{ background: 'var(--md-sys-color-background)' }}>
+      <Header />
         
-        <div className="container mx-auto px-4 py-8 space-y-8">
-          {/* Hero Section */}
-          <Hero />
+      <div className="max-w-screen-xl mx-auto px-4 py-6 space-y-6">
+        {/* Stats Overview */}
+        <Stats />
 
-          {/* Stats Overview */}
-          <Stats />
+        {/* Search and Filter */}
+        <div className="flex flex-col md:flex-row gap-4 items-start">
+          <div className="flex-1">
+            <SearchBar value={searchQuery} onChange={setSearchQuery} />
+          </div>
+          <FilterPanel
+            selectedTopics={selectedTopics}
+            onTopicsChange={setSelectedTopics}
+            dateRange={dateRange}
+            onDateRangeChange={setDateRange}
+          />
+        </div>
 
-          {/* Search and Filter */}
-          <div className="flex flex-col lg:flex-row gap-4">
-            <div className="flex-1">
-              <SearchBar value={searchQuery} onChange={setSearchQuery} />
-            </div>
-            <FilterPanel
+        {/* Main Dashboard Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Live Feed - Takes 2 columns */}
+          <div className="lg:col-span-2">
+            <LiveFeed
+              searchQuery={searchQuery}
               selectedTopics={selectedTopics}
-              onTopicsChange={setSelectedTopics}
               dateRange={dateRange}
-              onDateRangeChange={setDateRange}
             />
           </div>
 
-          {/* Main Dashboard Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Live Feed - Takes 2 columns */}
-            <div className="lg:col-span-2">
-              <LiveFeed
-                searchQuery={searchQuery}
-                selectedTopics={selectedTopics}
-                dateRange={dateRange}
-              />
-            </div>
+          {/* Right Sidebar */}
+          <div className="space-y-4">
+            {/* Pipeline Status */}
+            <PipelineStatus />
 
-            {/* Right Sidebar */}
-            <div className="space-y-6">
-              {/* Pipeline Status */}
-              <PipelineStatus />
-
-              {/* Topic Analytics */}
-              <TopicChart />
-            </div>
+            {/* Topic Analytics */}
+            <TopicChart />
           </div>
         </div>
       </div>
