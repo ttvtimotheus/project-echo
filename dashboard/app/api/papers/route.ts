@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
+import { db } from '@/lib/firebase-admin'
 import type { Paper } from '@/types'
-
-const GCP_PROJECT = process.env.GCP_PROJECT || 'echo-476821'
-const FIRESTORE_API = `https://firestore.googleapis.com/v1/projects/${GCP_PROJECT}/databases/(default)/documents`
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
@@ -10,62 +8,47 @@ export async function GET(request: Request) {
   const topic = searchParams.get('topic')
 
   try {
-    // Fetch documents from Firestore
-    const docsResponse = await fetch(`${FIRESTORE_API}/documents`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    // Fetch documents from Firestore using Admin SDK
+    const [documentsSnap, analysesSnap, summariesSnap] = await Promise.all([
+      db.collection('documents').get(),
+      db.collection('analyses').get(),
+      db.collection('summaries').get(),
+    ])
+
+    // Convert to maps for easy lookup
+    const analysesMap = new Map()
+    analysesSnap.docs.forEach(doc => {
+      const data = doc.data()
+      if (data.doc_id) {
+        analysesMap.set(data.doc_id, data)
+      }
     })
 
-    if (!docsResponse.ok) {
-      throw new Error('Failed to fetch documents')
-    }
-
-    const docsData = await docsResponse.json()
-    
-    // Fetch analyses
-    const analysesResponse = await fetch(`${FIRESTORE_API}/analyses`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
+    const summariesMap = new Map()
+    summariesSnap.docs.forEach(doc => {
+      const data = doc.data()
+      if (data.doc_id) {
+        summariesMap.set(data.doc_id, data)
+      }
     })
-
-    const analysesData = analysesResponse.ok ? await analysesResponse.json() : { documents: [] }
-
-    // Fetch summaries
-    const summariesResponse = await fetch(`${FIRESTORE_API}/summaries`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-
-    const summariesData = summariesResponse.ok ? await summariesResponse.json() : { documents: [] }
 
     // Combine data
-    const papers: Paper[] = (docsData.documents || []).map((doc: any) => {
-      const docId = doc.name.split('/').pop()
-      const fields = doc.fields
-
-      // Find corresponding analysis
-      const analysis = (analysesData.documents || []).find((a: any) => 
-        a.fields?.doc_id?.stringValue === docId
-      )
-
-      // Find corresponding summary
-      const summary = (summariesData.documents || []).find((s: any) => 
-        s.fields?.doc_id?.stringValue === docId
-      )
+    const papers: Paper[] = documentsSnap.docs.map(doc => {
+      const docId = doc.id
+      const data = doc.data()
+      const analysis = analysesMap.get(docId)
+      const summary = summariesMap.get(docId)
 
       return {
         id: docId,
-        title: fields?.title?.stringValue || 'Untitled',
-        link: fields?.link?.stringValue || '',
-        summary: summary?.fields?.summary?.stringValue || fields?.summary?.stringValue || '',
-        topics: analysis?.fields?.topics?.arrayValue?.values?.map((v: any) => v.stringValue) || [],
-        score: analysis?.fields?.score?.doubleValue || 0,
-        timestamp: fields?.timestamp?.timestampValue || new Date().toISOString(),
-        analyzed_at: analysis?.fields?.timestamp?.timestampValue,
-        summarized_at: summary?.fields?.timestamp?.timestampValue,
+        title: data.title || 'Untitled',
+        link: data.link || '',
+        summary: summary?.summary || data.summary || '',
+        topics: analysis?.topics || [],
+        score: analysis?.score || 0,
+        timestamp: data.timestamp?.toDate().toISOString() || new Date().toISOString(),
+        analyzed_at: analysis?.timestamp?.toDate().toISOString(),
+        summarized_at: summary?.timestamp?.toDate().toISOString(),
       }
     })
 

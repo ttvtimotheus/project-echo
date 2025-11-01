@@ -1,30 +1,28 @@
 import { NextResponse } from 'next/server'
-
-const GCP_PROJECT = process.env.GCP_PROJECT || 'echo-476821'
-const FIRESTORE_API = `https://firestore.googleapis.com/v1/projects/${GCP_PROJECT}/databases/(default)/documents`
+import { db } from '@/lib/firebase-admin'
 
 export async function GET() {
   try {
     // Fetch counts from all collections
-    const [docsRes, analysesRes, summariesRes, reportsRes] = await Promise.all([
-      fetch(`${FIRESTORE_API}/documents`),
-      fetch(`${FIRESTORE_API}/analyses`),
-      fetch(`${FIRESTORE_API}/summaries`),
-      fetch(`${FIRESTORE_API}/reports`),
+    const [documentsSnap, analysesSnap, summariesSnap, reportsSnap] = await Promise.all([
+      db.collection('documents').count().get(),
+      db.collection('analyses').count().get(),
+      db.collection('summaries').count().get(),
+      db.collection('reports').count().get(),
     ])
 
-    const docsData = await docsRes.json()
-    const analysesData = await analysesRes.json()
-    const summariesData = await summariesRes.json()
-    const reportsData = await reportsRes.json()
+    const total_documents = documentsSnap.data().count
+    const total_analyses = analysesSnap.data().count
+    const total_summaries = summariesSnap.data().count
+    const total_reports = reportsSnap.data().count
 
     const stats = {
-      total_documents: docsData.documents?.length || 0,
-      total_analyses: analysesData.documents?.length || 0,
-      total_summaries: summariesData.documents?.length || 0,
-      total_reports: reportsData.documents?.length || 0,
-      success_rate: docsData.documents?.length > 0 
-        ? ((summariesData.documents?.length || 0) / docsData.documents.length * 100).toFixed(1)
+      total_documents,
+      total_analyses,
+      total_summaries,
+      total_reports,
+      success_rate: total_documents > 0 
+        ? ((total_summaries / total_documents) * 100).toFixed(1)
         : 0,
     }
 
